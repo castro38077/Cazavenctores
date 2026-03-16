@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cazavectores - Crear Usuario</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header>
+    Cazavectores - Crear Usuario
+</header>
+
+<div class="container">
+
+    <h2>Crear nuevo usuario</h2>
+    {% if error %}
+    <div class="error-box">
+    ⚠ {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+
+        <input type="text" name="username" placeholder="Usuario" required>
+
+        <input type="password" name="password" placeholder="Contraseña" required>
+
+        <input type="password" name="clave_admin" placeholder="Clave administrador" required>
+
+        <button type="submit">Crear usuario</button>
+
+    </form>
+
+    <br>
+
+    <a href="/login">
+        <button>Volver al login</button>
+    </a>
+
+</div>
+
+</body>
+</html>

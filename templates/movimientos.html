@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Historial de Movimientos</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+Historial de Inventario
+</header>
+
+<div class="container">
+
+<a href="/inventario"><button>Volver al Inventario</button></a>
+
+<h2>Entradas y Salidas</h2>
+
+<form class="filter-bar" method="GET" action="/movimientos">
+    <div class="filter-item">
+        <label class="filter-label" for="tipo">Tipo:</label>
+        <select name="tipo" id="tipo">
+            <option value="todos" {% if tipo == 'todos' %}selected{% endif %}>Todos</option>
+            <option value="entrada" {% if tipo == 'entrada' %}selected{% endif %}>Entrada</option>
+            <option value="salida" {% if tipo == 'salida' %}selected{% endif %}>Salida</option>
+        </select>
+    </div>
+
+    <div class="filter-item">
+        <label class="filter-label" for="desde">Desde:</label>
+        <input type="date" id="desde" name="desde" value="{{ fecha_desde }}">
+    </div>
+
+    <div class="filter-item">
+        <label class="filter-label" for="hasta">Hasta:</label>
+        <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}">
+    </div>
+
+    <div class="filter-item">
+        <label class="filter-label" for="usuario">Usuario:</label>
+        <select name="usuario" id="usuario">
+            <option value="todos" {% if usuario == 'todos' %}selected{% endif %}>Todos</option>
+            {% for u in usuarios %}
+            <option value="{{ u }}" {% if usuario == u %}selected{% endif %}>{{ u }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-item">
+        <button type="submit">Aplicar</button>
+        <a href="/movimientos/export?tipo={{ tipo }}&usuario={{ usuario }}&desde={{ fecha_desde }}&hasta={{ fecha_hasta }}">
+            <button type="button">Exportar Excel</button>
+        </a>
+    </div>
+</form>
+
+<table>
+
+<tr>
+<th>Producto</th>
+<th>Tipo</th>
+<th>Cantidad</th>
+<th>Usuario</th>
+<th>Fecha</th>
+</tr>
+
+{% for m in datos %}
+
+<tr>
+<td>{{ m.nombre }}</td>
+<td>{{ m.tipo }}</td>
+<td>{{ m.cantidad }}</td>
+<td>{{ m.usuario }}</td>
+<td>{{ m.fecha }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+</body>
+</html>

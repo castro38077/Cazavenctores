@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cazavectores - Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    Cazavectores - Chat Interno
+</header>
+
+<div class="container">
+    <a href="/inventario"><button>Volver</button></a>
+
+    <form action="/enviar" method="POST">
+        <input type="text" name="mensaje" placeholder="Escribe un mensaje..." required>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <h3>Mensajes</h3>
+    <div id="mensajesContainer" class="chat-messages"></div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+const mensajesContainer = document.getElementById('mensajesContainer');
+const mensajeForm = document.getElementById('mensajeForm');
+const mensajeInput = document.getElementById('mensajeInput');
+
+const socket = io();
+
+socket.on('connect', () => {
+    console.log('Conectado al servidor de chat');
+});
+
+socket.on('messages', (mensajes) => {
+    mensajesContainer.innerHTML = mensajes
+        .map(m => `
+            <div class="message">
+                <div class="message-header">
+                    <strong>${m.usuario}</strong>
+                    <span class="message-time">${new Date(m.fecha).toLocaleString()}</span>
+                </div>
+                <div class="message-bubble">${m.mensaje}</div>
+            </div>
+        `)
+        .join('');
+    mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+});
+
+socket.on('new_message', (m) => {
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.innerHTML = `
+        <div class="message-header">
+            <strong>${m.usuario}</strong>
+            <span class="message-time">${new Date(m.fecha).toLocaleString()}</span>
+        </div>
+        <div class="message-bubble">${m.mensaje}</div>
+    `;
+    mensajesContainer.appendChild(div);
+    mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+    // Animación de entrada
+    div.style.animation = 'slideIn 0.3s ease-out';
+});
+
+mensajeForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const texto = mensajeInput.value.trim();
+    if (!texto) return;
+
+    socket.emit('send_message', { mensaje: texto });
+    mensajeInput.value = '';
+});
+</script>
+
+</body>
+</html>
