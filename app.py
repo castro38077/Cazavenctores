@@ -97,14 +97,18 @@ def init_db_route():
 # ============================================================
 
 def get_connection():
-    """Obtener conexión a MySQL con variables de entorno de Railway"""
-    return pymysql.connect(
-        host=os.environ.get('MYSQL_HOST', 'localhost'),
-        user=os.environ.get('MYSQL_USER', 'root'),
-        password=os.environ.get('MYSQL_PASSWORD', ''),
-        database=os.environ.get('MYSQL_DATABASE', 'cazavectores'),
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    try:
+        return pymysql.connect(
+            host=os.environ.get('DB_HOST'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('MYSQLPASSWORD'),
+            database=os.environ.get('DB_NAME'),
+            port=int(os.environ.get('MYSQLPORT', 3306)),
+            cursorclass=pymysql.cursors.DictCursor
+        )
+    except Exception as e:
+        print("❌ Error de conexión:", e)
+        raise
 
 # ============================================================
 # LOGIN
