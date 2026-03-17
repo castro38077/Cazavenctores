@@ -17,20 +17,98 @@ def add_header(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
-app.secret_key = "cazavectores_secret"
 
-# ---------------- CONEXIÓN MYSQL ----------------
+# ============================================================
+# HEALTH CHECK Y INICIALIZACIÓN DE BASE DE DATOS
+# ============================================================
+
+@app.route('/health')
+def health():
+    """Verificar conexión a MySQL"""
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        connection.close()
+        return {"status": "✅ Conexión a MySQL exitosa"}, 200
+    except Exception as e:
+        return {"status": "❌ Error", "error": str(e)}, 500
+
+
+@app.route('/init-db')
+def init_db_route():
+    """Inicializar tablas de la base de datos"""
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        # Crear tabla usuarios
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(100) NOT NULL
+        )
+        """)
+
+        # Crear tabla productos
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS productos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(100) NOT NULL,
+            cantidad INT NOT NULL DEFAULT 0,
+            precio FLOAT NOT NULL,
+            fecha_vencimiento DATE,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        # Crear tabla movimientos
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS movimientos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            producto_id INT NOT NULL,
+            tipo ENUM('entrada', 'salida') NOT NULL,
+            cantidad INT NOT NULL,
+            usuario VARCHAR(50) NOT NULL,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (producto_id) REFERENCES productos(id)
+        )
+        """)
+
+        # Crear tabla mensajes
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mensajes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario VARCHAR(50) NOT NULL,
+            mensaje TEXT NOT NULL,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        connection.commit()
+        connection.close()
+        return {"status": "✅ Tablas creadas correctamente"}, 200
+    except Exception as e:
+        return {"status": "❌ Error", "error": str(e)}, 500
+
+# ============================================================
+# CONEXIÓN MYSQL - ACTUALIZADO PARA RAILWAY
+# ============================================================
 
 def get_connection():
+    """Obtener conexión a MySQL con variables de entorno de Railway"""
     return pymysql.connect(
-        host=os.environ.get('DB_HOST', 'localhost'),
-        user=os.environ.get('DB_USER', 'root'),
-        password=os.environ.get('DB_PASSWORD', ''),
-        database=os.environ.get('DB_NAME', 'cazavectores'),
+        host=os.environ.get('MYSQL_HOST', 'localhost'),
+        user=os.environ.get('MYSQL_USER', 'root'),
+        password=os.environ.get('MYSQL_PASSWORD', ''),
+        database=os.environ.get('MYSQL_DATABASE', 'cazavectores'),
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# ---------------- LOGIN ----------------
+# ============================================================
+# LOGIN
+# ============================================================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -70,7 +148,10 @@ def logout():
 def home():
     return redirect("/login")
 
-# ---------------- CREAR USUARIOS ----------------
+# ============================================================
+# CREAR USUARIOS
+# ============================================================
+
 @app.route("/registro", methods=["GET","POST"])
 def registro():
 
@@ -99,7 +180,9 @@ def registro():
 
     return render_template("registro.html")
 
-# ---------------- INVENTARIO ----------------
+# ============================================================
+# INVENTARIO
+# ============================================================
 
 @app.route("/inventario")
 def index():
@@ -242,7 +325,9 @@ def index():
         total_pages=total_pages
     )
 
-# ---------------- AGREGAR PRODUCTO ----------------
+# ============================================================
+# AGREGAR PRODUCTO
+# ============================================================
 
 @app.route("/agregar", methods=["POST"])
 def agregar():
@@ -297,12 +382,12 @@ def agregar():
 
     connection.commit()
     connection.close()
-    
 
     return redirect("/inventario")
 
-
-# ---------------- VENDER PRODUCTO (FEFO) ----------------
+# ============================================================
+# VENDER PRODUCTO (FEFO)
+# ============================================================
 
 @app.route("/vender", methods=["POST"])
 def vender():
@@ -412,8 +497,9 @@ def vender():
 
     return redirect("/inventario")
 
-
-# ---------------- HISTORIAL MOVIMIENTOS ----------------
+# ============================================================
+# HISTORIAL MOVIMIENTOS
+# ============================================================
 
 @app.route("/movimientos")
 def movimientos():
@@ -546,8 +632,9 @@ def export_movimientos():
 
     return send_file(output, as_attachment=True, download_name='movimientos.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-
-# ---------------- CHAT INTERNO ----------------
+# ============================================================
+# CHAT INTERNO
+# ============================================================
 
 @app.route("/chat")
 def chat():
@@ -601,9 +688,10 @@ def enviar():
 
     return redirect("/chat")
 
-
-# ---------------- EJECUTAR APP ----------------
+# ============================================================
+# EJECUTAR APP
+# ============================================================
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
