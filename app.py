@@ -98,12 +98,24 @@ def init_db_route():
 
 def get_connection():
     try:
+        host = os.environ.get('MYSQLHOST')
+        user = os.environ.get('MYSQLUSER')
+        password = os.environ.get('MYSQLPASSWORD')
+        database = os.environ.get('MYSQLDATABASE')
+        port = os.environ.get('MYSQLPORT')
+
+        print("DEBUG:")
+        print("HOST:", host)
+        print("USER:", user)
+        print("DB:", database)
+        print("PORT:", port)
+
         return pymysql.connect(
-            host=os.environ.get('DB_HOST'),
-            user=os.environ.get('DB_USER'),
-            password=os.environ.get('MYSQLPASSWORD'),
-            database=os.environ.get('DB_NAME'),
-            port=int(os.environ.get('MYSQLPORT', 3306)),
+            host=host,
+            user=user,
+            password=password,
+            database=database,
+            port=int(port),
             cursorclass=pymysql.cursors.DictCursor
         )
     except Exception as e:
